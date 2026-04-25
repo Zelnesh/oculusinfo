@@ -8,6 +8,7 @@ import (
 	"strings"
 	"fmt"
 	"sync"
+	"strconv"
 )
 
 
@@ -43,11 +44,27 @@ func ScanPort (ip, port string) <-chan string {
 
 		go func(){
 			for _, port := range ports {
-			wg.Add(1)
-			go scan(ip,strings.TrimSpace(port), results, &wg)
+			    wg.Add(1)
+			    go scan(ip,strings.TrimSpace(port), results, &wg)
 			}
 			wg.Wait()
 			close(results)
+		}()
+	}
+
+	if strings.Contains(port, "-"){
+		ports := strings.Split(port, "-")
+		startPort, _ := strconv.Atoi(ports[0])
+		endPort, _ := strconv.Atoi(ports[1])
+
+		go func(){
+			for port := startPort; port <= endPort; port++{
+				wg.Add(1)
+				go scan(ip, strconv.Itoa(port), results, &wg)
+			}
+			wg.Wait()
+			close(results)
+
 		}()
 	}
 
