@@ -50,12 +50,24 @@ func ScanPort (ip, port string) <-chan string {
 
 	var wg sync.WaitGroup
 	results := make(chan string)
-	if !portArgInputCharValidation(port){
+	if port == "" {
+		go func(){
+			for p := 1; p <= 1024; p++ {
+				wg.Add(1)
+				go scan(ip, strconv.Itoa(p), results, &wg)
+			}
+			wg.Wait()
+			close(results)
+		}()
+		return results
+
+	} else if !portArgInputCharValidation(port){
 		go func(){
 			results <- "Wrong port argument. Please check documentation using --help"
 			close(results)
 		}()
 		return results
+
 	} else if strings.Contains(port, "-") && strings.Contains(port, ","){
 		go func(){
 			results <- "Wrong port argument. Please check documentation using --help"
